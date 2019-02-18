@@ -370,6 +370,10 @@ func (ai *MinimaxAI) AnalyzeAll(ctx context.Context, p *tak.Position) ([][]tak.M
 }
 
 func (m *MinimaxAI) Analyze(ctx context.Context, p *tak.Position) ([]tak.Move, int64, Stats) {
+	return m.AnalyzeDepth(ctx, m.cfg.Depth, p)
+}
+
+func (m *MinimaxAI) AnalyzeDepth(ctx context.Context, depth int, p *tak.Position) ([]tak.Move, int64, Stats) {
 	if m.cfg.Size != p.Size() {
 		panic("Analyze: wrong size")
 	}
@@ -378,10 +382,12 @@ func (m *MinimaxAI) Analyze(ctx context.Context, p *tak.Position) ([]tak.Move, i
 	}
 	var cancel int32
 	m.cancel = &cancel
-	go func() {
-		<-ctx.Done()
-		atomic.StoreInt32(&cancel, 1)
-	}()
+	if ctx.Done() != nil {
+		go func() {
+			<-ctx.Done()
+			atomic.StoreInt32(&cancel, 1)
+		}()
+	}
 
 	var seed = m.cfg.Seed
 	if seed == 0 {
@@ -411,7 +417,7 @@ func (m *MinimaxAI) Analyze(ctx context.Context, p *tak.Position) ([]tak.Move, i
 
 	var st Stats
 	st.Depth = base
-	for i := 1; i+base <= m.cfg.Depth; i++ {
+	for i := 1; i+base <= depth; i++ {
 		m.st = Stats{Depth: i + base}
 		start := time.Now()
 		m.depth = i + base

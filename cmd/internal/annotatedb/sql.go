@@ -19,7 +19,7 @@ type annotation struct {
 	Game     int    `db:"game"`
 	Ply      int    `db:"ply"`
 	Depth    int    `db:"depth"`
-	Analysis uint64 `db:"analysis"`
+	Analysis int64  `db:"analysis"`
 	Move     string `db:"move"`
 }
 
@@ -40,3 +40,8 @@ SELECT id, ptn
 FROM ptns
 ORDER BY id ASC
 `
+
+type todoRow struct {
+	Id  int    `db:"id"`
+	PTN string `db:"ptn"`
+}
