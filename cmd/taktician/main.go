@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/subcommands"
 	"github.com/nelhage/taktician/cmd/internal/analyze"
+	"github.com/nelhage/taktician/cmd/internal/annotatedb"
 	"github.com/nelhage/taktician/cmd/internal/canonicalize"
 	"github.com/nelhage/taktician/cmd/internal/importptn"
 	"github.com/nelhage/taktician/cmd/internal/openings"
@@ -31,6 +32,7 @@ func main() {
 	subcommands.Register(&canonicalize.Command{}, "")
 
 	subcommands.Register(&importptn.Command{}, "")
+	subcommands.Register(&annotatedb.Command{}, "")
 
 	flag.Parse()
 	ctx := context.Background()

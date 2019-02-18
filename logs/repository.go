@@ -1,14 +1,14 @@
 package logs
 
 import (
-	"database/sql"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3" // repository assumes sqlite
 )
 
 type Repository struct {
-	db *sql.DB
+	db *sqlx.DB
 }
 
 type Game struct {
@@ -23,7 +23,7 @@ type Game struct {
 }
 
 func Open(db string) (*Repository, error) {
-	sql, err := sql.Open("sqlite3", db)
+	sql, err := sqlx.Open("sqlite3", db)
 	if err != nil {
 		return nil, err
 	}
@@ -34,6 +34,6 @@ func (r *Repository) Close() {
 	r.db.Close()
 }
 
-func (r *Repository) DB() *sql.DB {
+func (r *Repository) DB() *sqlx.DB {
 	return r.db
 }
