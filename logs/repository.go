@@ -1,6 +1,7 @@
 package logs
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -23,7 +24,7 @@ type Game struct {
 }
 
 func Open(db string) (*Repository, error) {
-	sql, err := sqlx.Open("sqlite3", db)
+	sql, err := sqlx.Open("sqlite3", fmt.Sprintf("file:%s?cache=shared&mode=rwc", db))
 	if err != nil {
 		return nil, err
 	}

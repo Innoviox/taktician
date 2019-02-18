@@ -2,11 +2,9 @@ package annotatedb
 
 import (
 	"context"
-	"encoding/csv"
 	"flag"
+	"fmt"
 	"log"
-	"os"
-	"strconv"
 	"strings"
 
 	"github.com/google/subcommands"
@@ -83,6 +81,13 @@ func (c *Command) Execute(ctx context.Context, flag *flag.FlagSet, _ ...interfac
 
 	db := repo.DB()
 
+	for _, sql := range createSchema {
+		_, err := db.Exec(sql)
+		if err != nil {
+			log.Fatalf("create schema: %v", err)
+		}
+	}
+
 	todo := make(chan todoRow)
 	results := make(chan batch)
 
@@ -115,18 +120,36 @@ func (c *Command) Execute(ctx context.Context, flag *flag.FlagSet, _ ...interfac
 		close(results)
 	}()
 
-	w := csv.NewWriter(os.Stdout)
+	tx, err := db.Begin()
+	if err != nil {
+		log.Fatalf("begin: %v", err)
+	}
 	for batch := range results {
+		vals := make([]interface{}, 5*len(batch))
+		i := 0
 		for _, a := range batch {
-			row := []string{
-				strconv.Itoa(a.Game),
-				strconv.Itoa(a.Ply),
-				strconv.Itoa(a.Depth),
-				strconv.FormatInt(a.Analysis, 10),
-				a.Move,
-			}
-			w.Write(row)
+			vals[i] = a.Game
+			i++
+			vals[i] = a.Ply
+			i++
+			vals[i] = a.Depth
+			i++
+			vals[i] = a.Analysis
+			i++
+			vals[i] = a.Move
+			i++
 		}
+
+		placeholders := strings.Repeat("(?, ?, ?, ?, ?), ", len(batch)-1)
+		if _, err := db.Exec(
+			fmt.Sprintf("INSERT OR REPLACE INTO annotations VALUES %s (?, ?, ?, ?, ?)", placeholders),
+			vals...); err != nil {
+			log.Fatalf("INSERT: %v", err)
+		}
+
+	}
+	if err := tx.Commit(); err != nil {
+		log.Fatalf("commit: %v", err)
 	}
 
 	return subcommands.ExitSuccess
