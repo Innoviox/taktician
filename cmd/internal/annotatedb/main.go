@@ -2,6 +2,7 @@ package annotatedb
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"log"
@@ -31,6 +32,11 @@ func (c *Command) SetFlags(flags *flag.FlagSet) {
 	flags.IntVar(&c.maxPly, "max-ply", 5, "maximum ply to analyze")
 	flags.IntVar(&c.workers, "workers", 2, "parallel workers")
 }
+
+const (
+	maxBatch       = 50
+	commitInterval = 10000
+)
 
 type batch []annotation
 
@@ -66,6 +72,10 @@ func (c *Command) annotateRows(ctx context.Context, todo <-chan todoRow, out cha
 					Analysis: v,
 					Move:     ptn.FormatMove(pv[0]),
 				})
+			}
+			if len(batch) > maxBatch {
+				out <- batch
+				batch = nil
 			}
 		}
 		out <- batch
@@ -120,11 +130,17 @@ func (c *Command) Execute(ctx context.Context, flag *flag.FlagSet, _ ...interfac
 		close(results)
 	}()
 
-	tx, err := db.Begin()
-	if err != nil {
-		log.Fatalf("begin: %v", err)
-	}
+	var tx *sql.Tx
+	n := 0
+
 	for batch := range results {
+		if tx == nil {
+			tx, err = db.Begin()
+			if err != nil {
+				log.Fatalf("begin: %v", err)
+			}
+		}
+
 		vals := make([]interface{}, 5*len(batch))
 		i := 0
 		for _, a := range batch {
@@ -146,10 +162,14 @@ func (c *Command) Execute(ctx context.Context, flag *flag.FlagSet, _ ...interfac
 			vals...); err != nil {
 			log.Fatalf("INSERT: %v", err)
 		}
+		n += len(batch)
 
-	}
-	if err := tx.Commit(); err != nil {
-		log.Fatalf("commit: %v", err)
+		if n > commitInterval {
+			if err := tx.Commit(); err != nil {
+				log.Fatalf("commit: %v", err)
+			}
+			tx = nil
+		}
 	}
 
 	return subcommands.ExitSuccess
