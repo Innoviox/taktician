@@ -79,6 +79,7 @@ func (c *Command) annotateRows(ctx context.Context, todo <-chan todoRow, out cha
 			}
 		}
 		out <- batch
+		log.Printf("game=%d moves=%d", row.Id, it.Position().MoveNumber())
 	}
 	return nil
 }
@@ -134,6 +135,9 @@ func (c *Command) Execute(ctx context.Context, flag *flag.FlagSet, _ ...interfac
 	n := 0
 
 	for batch := range results {
+		if len(batch) == 0 {
+			continue
+		}
 		if tx == nil {
 			tx, err = db.Begin()
 			if err != nil {
