@@ -1,0 +1,35 @@
+[Site "PlayTak.com"]
+[Date "2019.8.8"]
+[Player1 "TakticianBot"]
+[Player2 "ryfras"]
+[Size "6"]
+[Result "R-0"]
+
+1. a1 f6
+2. d4 a2
+3. b4 a3
+4. c4 a4
+5. Cb3 a5
+6. b3< Cb3
+7. e4 a6
+8. f4 b3+
+9. b3 2b4-
+10. b4 a4>
+11. b5 a4
+12. 2a3+ 3b3+
+13. f5 b6
+14. f3 e2
+15. f2 e2>
+16. e2 a3
+17. e3 Se1
+18. d2 e1+
+19. d3 2e2<
+20. e2 2f2<
+21. f2 3e2>
+22. e2 Se1
+23. c3 b3
+24. 3a4- a4
+25. b2 3b4-
+26. 4a3+ a3
+27. b5- 
+ R-0 --

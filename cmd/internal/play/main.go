@@ -3,7 +3,7 @@ package play
 import (
 	"bufio"
 	"flag"
-	"io/ioutil"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -42,7 +42,7 @@ Play Tak on the command-line, against a human or AI.
 
 func (c *Command) SetFlags(flags *flag.FlagSet) {
 	flags.StringVar(&c.white, "white", "human", "white player")
-	flags.StringVar(&c.black, "black", "human", "white player")
+	flags.StringVar(&c.black, "black", "minimax:5", "black player")
 	flags.IntVar(&c.size, "size", 5, "game size")
 	flags.IntVar(&c.debug, "debug", 0, "debug level")
 	flags.DurationVar(&c.limit, "limit", time.Minute, "ai time limit")
@@ -52,25 +52,37 @@ func (c *Command) SetFlags(flags *flag.FlagSet) {
 }
 
 func (c *Command) Execute(ctx context.Context, flag *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
+	parsed, e := ptn.ParseFile(flag.Arg(0))
+	if e != nil {
+		log.Fatal("parse:", e)
+	}
+
 	in := bufio.NewReader(os.Stdin)
-	st := &cli.CLI{
-		Config: tak.Config{Size: c.size},
-		Out:    os.Stdout,
-		White:  c.parsePlayer(in, c.white),
-		Black:  c.parsePlayer(in, c.black),
-		Glyphs: glyphs(c.unicode),
-	}
-	st.Play()
-	if c.out != "" {
-		p := &ptn.PTN{}
-		p.Tags = []ptn.Tag{
-			{Name: "Size", Value: strconv.Itoa(c.size)},
-			{Name: "Player1", Value: c.white},
-			{Name: "Player2", Value: c.black},
-		}
-		p.AddMoves(st.Moves())
-		ioutil.WriteFile(c.out, []byte(p.Render()), 0644)
-	}
+	black := c.parsePlayer(in, c.black)
+
+	p, e := parsed.PositionAtMove(0, tak.Black)
+	fmt.Printf(ptn.FormatMove(black.GetMove(p)))
+
+
+	// in := bufio.NewReader(os.Stdin)
+	// st := &cli.CLI{
+	// 	Config: tak.Config{Size: c.size},
+	// 	Out:    os.Stdout,
+	// 	White:  c.parsePlayer(in, c.white),
+	// 	Black:  c.parsePlayer(in, c.black),
+	// 	Glyphs: glyphs(c.unicode),
+	// }
+	// st.Play()
+	// if c.out != "" {
+	// 	p := &ptn.PTN{}
+	// 	p.Tags = []ptn.Tag{
+	// 		{Name: "Size", Value: strconv.Itoa(c.size)},
+	// 		{Name: "Player1", Value: c.white},
+	// 		{Name: "Player2", Value: c.black},
+	// 	}
+	// 	p.AddMoves(st.Moves())
+	// 	ioutil.WriteFile(c.out, []byte(p.Render()), 0644)
+	// }
 
 	return subcommands.ExitSuccess
 }
