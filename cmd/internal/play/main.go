@@ -27,6 +27,7 @@ type Command struct {
 	debug int
 	limit time.Duration
 	out   string
+	toplay string
 
 	unicode bool
 }
@@ -41,12 +42,13 @@ Play Tak on the command-line, against a human or AI.
 }
 
 func (c *Command) SetFlags(flags *flag.FlagSet) {
-	flags.StringVar(&c.white, "white", "human", "white player")
+	flags.StringVar(&c.white, "white", "minimax:5", "white player")
 	flags.StringVar(&c.black, "black", "minimax:5", "black player")
 	flags.IntVar(&c.size, "size", 5, "game size")
 	flags.IntVar(&c.debug, "debug", 0, "debug level")
 	flags.DurationVar(&c.limit, "limit", time.Minute, "ai time limit")
 	flags.StringVar(&c.out, "out", "", "write ptn to file")
+	flags.StringVar(&c.toplay, "toplay", "black", "toplay")
 
 	flags.BoolVar(&c.unicode, "unicode", false, "render board with utf8 glyphs")
 }
@@ -58,10 +60,18 @@ func (c *Command) Execute(ctx context.Context, flag *flag.FlagSet, _ ...interfac
 	}
 
 	in := bufio.NewReader(os.Stdin)
+	white := c.parsePlayer(in, c.white)
 	black := c.parsePlayer(in, c.black)
 
-	p, e := parsed.PositionAtMove(0, tak.Black)
-	fmt.Printf(ptn.FormatMove(black.GetMove(p)))
+	if c.toplay == "white" {
+		p, e := parsed.PositionAtMove(0, tak.White)
+		if e != nil { log.Fatal("play:", e) }
+		fmt.Printf(ptn.FormatMove(white.GetMove(p)))
+	} else {
+		p, e := parsed.PositionAtMove(0, tak.Black)
+		if e != nil { log.Fatal("play:", e) }
+		fmt.Printf(ptn.FormatMove(black.GetMove(p)))
+	}
 
 
 	// in := bufio.NewReader(os.Stdin)
