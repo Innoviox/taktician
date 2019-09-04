@@ -1,4 +1,4 @@
-package play
+package play2
 
 import (
 	"bufio"
